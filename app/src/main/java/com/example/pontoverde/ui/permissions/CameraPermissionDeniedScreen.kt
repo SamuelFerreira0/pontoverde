@@ -1,8 +1,9 @@
-package com.example.pontoverde.ui.camera
+package com.example.pontoverde.ui.permissions
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,7 +92,7 @@ fun CameraPermissionDeniedScreen(
 /** Abre a página da app nas definições do sistema, onde se pode ativar a permissão. */
 internal fun Context.openAppSettings() {
     val intent = Intent(
-        android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
         Uri.fromParts("package", packageName, null),
     )
     startActivity(intent)

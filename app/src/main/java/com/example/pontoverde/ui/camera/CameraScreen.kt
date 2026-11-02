@@ -69,6 +69,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pontoverde.data.ScanResult
+import com.example.pontoverde.ui.permissions.CameraPermissionDeniedScreen
+import com.example.pontoverde.ui.permissions.openAppSettings
 import com.example.pontoverde.viewmodel.CameraUiState
 import com.example.pontoverde.viewmodel.CameraViewModel
 
