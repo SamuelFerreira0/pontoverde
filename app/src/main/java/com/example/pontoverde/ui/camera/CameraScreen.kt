@@ -60,6 +60,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -71,6 +72,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pontoverde.data.ScanResult
 import com.example.pontoverde.ui.permissions.CameraPermissionDeniedScreen
 import com.example.pontoverde.ui.permissions.openAppSettings
+import com.example.pontoverde.ui.theme.PontoverdeTheme
 import com.example.pontoverde.viewmodel.CameraUiState
 import com.example.pontoverde.viewmodel.CameraViewModel
 
@@ -137,13 +139,48 @@ private fun CameraContent(viewModel: CameraViewModel, modifier: Modifier = Modif
             if (flashOn) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF
     }
 
+    CameraLayout(
+        state = state,
+        flashOn = flashOn,
+        onFlashToggle = { flashOn = !flashOn },
+        onCapture = {
+            controller.takePicture(
+                ContextCompat.getMainExecutor(context),
+                object : ImageCapture.OnImageCapturedCallback() {
+                    override fun onCaptureSuccess(image: ImageProxy) =
+                        viewModel.onImageCaptured(image, context.cacheDir)
+
+                    override fun onError(exception: ImageCaptureException) =
+                        viewModel.onCaptureError()
+                },
+            )
+        },
+        onDismissError = viewModel::dismissError,
+        modifier = modifier,
+        preview = {
+            AndroidView(
+                factory = { PreviewView(it).apply { this.controller = controller } },
+                modifier = Modifier.fillMaxSize(),
+            )
+        },
+    )
+}
+
+// Só desenha o ecrã (sem câmara nem ViewModel), para se poder ver no Preview.
+@Composable
+private fun CameraLayout(
+    state: CameraUiState,
+    flashOn: Boolean,
+    onFlashToggle: () -> Unit,
+    onCapture: () -> Unit,
+    onDismissError: () -> Unit,
+    modifier: Modifier = Modifier,
+    preview: @Composable () -> Unit = {},
+) {
     Box(modifier = modifier
         .fillMaxSize()
         .background(Color.Black)) {
-        AndroidView(
-            factory = { PreviewView(it).apply { this.controller = controller } },
-            modifier = Modifier.fillMaxSize(),
-        )
+        preview()
         // Degradé escuro em cima e em baixo, para o texto e os botões se lerem.
         Box(
             modifier = Modifier
@@ -178,7 +215,7 @@ private fun CameraContent(viewModel: CameraViewModel, modifier: Modifier = Modif
                 )
             }
             FilledIconButton(
-                onClick = { flashOn = !flashOn },
+                onClick = onFlashToggle,
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = Color.White.copy(alpha = if (flashOn) 0.4f else 0.2f),
                     contentColor = Color.White,
@@ -213,18 +250,7 @@ private fun CameraContent(viewModel: CameraViewModel, modifier: Modifier = Modif
         }
 
         CaptureButton(
-            onClick = {
-                controller.takePicture(
-                    ContextCompat.getMainExecutor(context),
-                    object : ImageCapture.OnImageCapturedCallback() {
-                        override fun onCaptureSuccess(image: ImageProxy) =
-                            viewModel.onImageCaptured(image, context.cacheDir)
-
-                        override fun onError(exception: ImageCaptureException) =
-                            viewModel.onCaptureError()
-                    },
-                )
-            },
+            onClick = onCapture,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp),
@@ -233,14 +259,42 @@ private fun CameraContent(viewModel: CameraViewModel, modifier: Modifier = Modif
         (state as? CameraUiState.Identifying)?.let { IdentifyingOverlay(it.photo) }
         (state as? CameraUiState.Error)?.let { error ->
             AlertDialog(
-                onDismissRequest = viewModel::dismissError,
+                onDismissRequest = onDismissError,
                 title = { Text("Ocorreu um erro") },
                 text = { Text(error.message) },
                 confirmButton = {
-                    TextButton(onClick = viewModel::dismissError) { Text("Tentar outra vez") }
+                    TextButton(onClick = onDismissError) { Text("Tentar outra vez") }
                 },
             )
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 412, heightDp = 816)
+@Composable
+private fun CameraReadyPreview() {
+    PontoverdeTheme {
+        CameraLayout(
+            state = CameraUiState.Ready,
+            flashOn = false,
+            onFlashToggle = {},
+            onCapture = {},
+            onDismissError = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 412, heightDp = 816)
+@Composable
+private fun CameraIdentifyingPreview() {
+    PontoverdeTheme {
+        CameraLayout(
+            state = CameraUiState.Identifying(null),
+            flashOn = false,
+            onFlashToggle = {},
+            onCapture = {},
+            onDismissError = {},
+        )
     }
 }
 
@@ -325,4 +379,4 @@ private fun IdentifyingOverlay(photo: Bitmap?) {
 
 private fun Context.hasCameraPermission(): Boolean =
     ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
-        PackageManager.PERMISSION_GRANTED
+            PackageManager.PERMISSION_GRANTED

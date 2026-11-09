@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.pontoverde.ui.theme.PontoverdeTheme
 
 @Composable
 fun CameraPermissionDeniedScreen(
@@ -96,4 +98,12 @@ internal fun Context.openAppSettings() {
         Uri.fromParts("package", packageName, null),
     )
     startActivity(intent)
+}
+
+@Preview(showBackground = true, widthDp = 412, heightDp = 816)
+@Composable
+private fun CameraPermissionDeniedScreenPreview() {
+    PontoverdeTheme {
+        CameraPermissionDeniedScreen(onOpenSettings = {}, onNotNow = {})
+    }
 }
