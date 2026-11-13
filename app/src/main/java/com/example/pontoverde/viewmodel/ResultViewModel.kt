@@ -51,9 +51,15 @@ private val PASSOS_AMARELO = listOf(
     PassoDeposicao("Deposita", "Sem tampa, no amarelo"),
 )
 
-private val PASSOS_AZUL = listOf(
+private val PASSOS_CARTAO = listOf(
     PassoDeposicao("Desdobra", "Abre a caixa para ocupar menos espaço"),
     PassoDeposicao("Remove", "Tira fitas-cola e agrafos"),
+    PassoDeposicao("Deposita", "No ecoponto azul"),
+)
+
+private val PASSOS_PAPEL = listOf(
+    PassoDeposicao("Separa", "Tira clipes e agrafos"),
+    PassoDeposicao("Junta", "Dobra as folhas para ocuparem menos"),
     PassoDeposicao("Deposita", "No ecoponto azul"),
 )
 
@@ -65,8 +71,11 @@ private fun provisionalMap(labels: List<ScanLabel>): WasteInfo? {
             "bottle" -> return WasteInfo(
                 "Garrafa de plástico", TipoEcoponto.AMARELO, PASSOS_AMARELO, label.confidence
             )
-            "cardboard", "paper" -> return WasteInfo(
-                "Cartão", TipoEcoponto.AZUL, PASSOS_AZUL, label.confidence
+            "cardboard" -> return WasteInfo(
+                "Cartão", TipoEcoponto.AZUL, PASSOS_CARTAO, label.confidence
+            )
+            "paper" -> return WasteInfo(
+                "Papel", TipoEcoponto.AZUL, PASSOS_PAPEL, label.confidence
             )
         }
     }
