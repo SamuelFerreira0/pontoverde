@@ -8,4 +8,5 @@ data class WasteInfo(
     val nome: String,
     val ecoponto: TipoEcoponto,
     val passos: List<PassoDeposicao>,
+    val confidence: Float,
 )
