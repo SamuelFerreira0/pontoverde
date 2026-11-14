@@ -118,11 +118,12 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
                 ReportScreen(
                     onSubmit = { problema, _ ->
                         problemaEnviado = problema
-                        navController.navigate(Rotas.REPORT_ENVIADO)
+                        navController.navigate(Rotas.REPORT_ENVIADO) {
+                            popUpTo(Rotas.REPORTAR) { inclusive = true }
+                        }
                     }
                 )
             }
-
             // --- Fora da barra ---
             composable(Rotas.RESULTADO) {
                 ResultScreen(
