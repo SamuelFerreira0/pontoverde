@@ -1,0 +1,33 @@
+{
+  "ecopontos": [
+    {"id": "vdc-001", "lat": 41.7050159, "lon": -8.8477846, "tipos": ["VERDE", "AZUL"], "osm": 649897691},
+    {"id": "vdc-002", "lat": 41.692661, "lon": -8.8352141, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 1383618861},
+    {"id": "vdc-003", "lat": 41.6954615, "lon": -8.8378338, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 2164246963},
+    {"id": "vdc-004", "lat": 41.6968173, "lon": -8.8314254, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 2214600930},
+    {"id": "vdc-005", "lat": 41.7025405, "lon": -8.8358402, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 2219174159},
+    {"id": "vdc-006", "lat": 41.6962646, "lon": -8.8346706, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 2245243630},
+    {"id": "vdc-007", "lat": 41.6965806, "lon": -8.8376641, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 2340681594},
+    {"id": "vdc-008", "lat": 41.6970323, "lon": -8.8212836, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 2632306269},
+    {"id": "vdc-009", "lat": 41.7013116, "lon": -8.8230859, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 2632306270},
+    {"id": "vdc-010", "lat": 41.704311, "lon": -8.8228177, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 2899585764},
+    {"id": "vdc-011", "lat": 41.6990285, "lon": -8.8457617, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3133030514},
+    {"id": "vdc-012", "lat": 41.7022926, "lon": -8.8231122, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3274407854},
+    {"id": "vdc-013", "lat": 41.7016031, "lon": -8.8280334, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3274411490},
+    {"id": "vdc-014", "lat": 41.7022231, "lon": -8.8224729, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3428279498},
+    {"id": "vdc-015", "lat": 41.7037834, "lon": -8.825456, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3444925358},
+    {"id": "vdc-016", "lat": 41.6900831, "lon": -8.8332795, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3512113876},
+    {"id": "vdc-017", "lat": 41.6913351, "lon": -8.8337567, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3512113878},
+    {"id": "vdc-018", "lat": 41.7005396, "lon": -8.8231067, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3685812791},
+    {"id": "vdc-019", "lat": 41.6936505, "lon": -8.8327854, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 3986175046},
+    {"id": "vdc-020", "lat": 41.6901194, "lon": -8.8359569, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 4006516585},
+    {"id": "vdc-021", "lat": 41.7044598, "lon": -8.826351, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 7636173284},
+    {"id": "vdc-022", "lat": 41.7019156, "lon": -8.8344072, "tipos": ["VERDE", "AZUL", "AMARELO"], "osm": 10131168606},
+    {"id": "vdc-023", "nome": "Auchan SUPER Areosa", "lat": 41.70215, "lon": -8.84789, "tipos": ["VOLTA"], "osm": 13720660316},
+    {"id": "vdc-024", "nome": "Mercadona Viana do Castelo (Abelheira)", "lat": 41.706844, "lon": -8.826109, "tipos": ["VOLTA"], "osm": 13720660685},
+    {"id": "vdc-025", "nome": "Pingo Doce Viana do Castelo (R. de Aveiro)", "lat": 41.69632, "lon": -8.826073, "tipos": ["VOLTA"], "osm": 13722146711},
+    {"id": "vdc-026", "nome": "ALDI VIANA DO CASTELO", "lat": 41.695041, "lon": -8.843191, "tipos": ["VOLTA"], "osm": 13722147038},
+    {"id": "vdc-027", "nome": "Continente Bom Dia Viana Estação", "lat": 41.694345, "lon": -8.833833, "tipos": ["VOLTA"], "osm": 13722147443},
+    {"id": "vdc-028", "nome": "Lidl Viana do Castelo - Eça de Queirós", "lat": 41.706067, "lon": -8.819512, "tipos": ["VOLTA"], "osm": 13722148089},
+    {"id": "vdc-029", "nome": "Supermercado Miranda - Viana", "lat": 41.70374, "lon": -8.82272, "tipos": ["VOLTA"], "osm": 13722148186}
+  ]
+}
