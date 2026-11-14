@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -20,6 +23,7 @@ import com.example.pontoverde.ui.camera.CameraScreen
 import com.example.pontoverde.ui.map.MapScreen
 import com.example.pontoverde.ui.permissions.PermissionsScreen
 import com.example.pontoverde.ui.profile.ProfileScreen
+import com.example.pontoverde.ui.report.ProblemType
 import com.example.pontoverde.ui.report.ReportScreen
 import com.example.pontoverde.ui.report.ReportSentScreen
 import com.example.pontoverde.ui.result.ResultScreen
@@ -31,6 +35,8 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     // Um só ResultViewModel, partilhado pela Câmara (que o preenche) e pelo ecrã de Resultado
     val resultViewModel: ResultViewModel = viewModel()
+    // Problema que o utilizador acabou de sinalizar, para o ecrã "Report enviado"
+    var problemaEnviado by remember { mutableStateOf(ProblemType.Full) }
 
     val entradaAtual by navController.currentBackStackEntryAsState()
     val rotaAtual = entradaAtual?.destination?.route
@@ -110,10 +116,14 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
             }
             composable(Rotas.REPORTAR) {
                 ReportScreen(
-                    onSubmit = { _, _ -> navController.navigate(Rotas.REPORT_ENVIADO) }
+                    onSubmit = { problema, _ ->
+                        problemaEnviado = problema
+                        navController.navigate(Rotas.REPORT_ENVIADO) {
+                            popUpTo(Rotas.REPORTAR) { inclusive = true }
+                        }
+                    }
                 )
             }
-
             // --- Fora da barra ---
             composable(Rotas.RESULTADO) {
                 ResultScreen(
@@ -125,6 +135,7 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
             }
             composable(Rotas.REPORT_ENVIADO) {
                 ReportSentScreen(
+                    problem = problemaEnviado,
                     onBackToMap = { navController.irParaSeparador(Rotas.MAPA) },
                     onGoToCamera = { navController.irParaSeparador(Rotas.CAMARA) }
                 )
