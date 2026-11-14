@@ -27,6 +27,8 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.LocalDrink
 import androidx.compose.material.icons.outlined.WineBar
 import androidx.compose.material.icons.rounded.Eco
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -126,6 +128,7 @@ fun ProfileScreen(
     email: String = "jgmeirafaria@gmail.com",
     stats: List<BinStat> = sampleStats,
     activities: List<RecyclingActivity> = sampleActivities,
+    onSettings: () -> Unit = {},
 ) {
     var showEmpty by remember { mutableStateOf(false) }
 
@@ -139,7 +142,7 @@ fun ProfileScreen(
             Spacer(Modifier.height(4.dp))
         }
 
-        item { ProfileCard(name = userName, email = email) }
+        item { ProfileCard(name = userName, email = email, onSettings = onSettings) }
 
         item { MonthlyStatsCard(stats = stats) }
 
@@ -186,7 +189,7 @@ fun ProfileScreen(
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun ProfileCard(name: String, email: String) {
+private fun ProfileCard(name: String, email: String, onSettings: () -> Unit) {
     val initials = name.split(" ")
         .mapNotNull { it.firstOrNull() }
         .take(2)
@@ -241,7 +244,7 @@ private fun ProfileCard(name: String, email: String) {
 
         Spacer(Modifier.width(16.dp))
 
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = name,
                 fontSize = 18.sp,
@@ -250,6 +253,13 @@ private fun ProfileCard(name: String, email: String) {
             )
             Spacer(Modifier.height(2.dp))
             Text(text = email, fontSize = 11.sp, color = EcoColors.TextSecondary)
+        }
+        IconButton(onClick = onSettings) {
+            Icon(
+                imageVector = Icons.Outlined.Settings,
+                contentDescription = "Definições",
+                tint = EcoColors.TextSecondary,
+            )
         }
     }
 }
