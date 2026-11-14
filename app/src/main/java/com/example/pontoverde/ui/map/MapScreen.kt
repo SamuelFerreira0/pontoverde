@@ -54,6 +54,8 @@ private val TipoEcoponto.nome: String
         TipoEcoponto.AMARELO -> "Amarelo"
         TipoEcoponto.AZUL -> "Azul"
         TipoEcoponto.VERDE -> "Verde"
+        TipoEcoponto.PILHAO -> "Pilhão"
+        TipoEcoponto.ECOCENTRO -> "Ecocentro"
         TipoEcoponto.VOLTA -> "Volta"
     }
 
@@ -62,6 +64,8 @@ private val TipoEcoponto.cor: Color
         TipoEcoponto.AMARELO -> Color(0xFFFBC02D)
         TipoEcoponto.AZUL -> Color(0xFF1976D2)
         TipoEcoponto.VERDE -> Color(0xFF388E3C)
+        TipoEcoponto.PILHAO -> Color(0xFFD32F2F)
+        TipoEcoponto.ECOCENTRO -> Color(0xFFF57C00)
         TipoEcoponto.VOLTA -> Color(0xFF7B1FA2)
     }
 
@@ -210,7 +214,7 @@ private fun MapContent(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp)
                 ) {
-                    items(TipoEcoponto.entries) { tipo ->
+                    items(estado.tiposDisponiveis) { tipo ->
                         ChipFiltro(tipo, estado.filtro == tipo) { onFiltro(tipo) }
                     }
                 }

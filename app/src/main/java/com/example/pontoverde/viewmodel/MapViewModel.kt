@@ -30,6 +30,10 @@ data class MapUiState(
             return ecopontos.filter { f in it.tipos }
         }
 
+    /** Só os tipos que têm ecopontos, para não mostrar filtros vazios. */
+    val tiposDisponiveis: List<TipoEcoponto>
+        get() = ecopontos.flatMap { it.tipos }.distinct().sortedBy { it.ordinal }
+
     /** O ecoponto escolhido; se não houver nenhum, o mais próximo. */
     val selecionado: Ecoponto?
         get() = visiveis.firstOrNull { it.id == selecionadoId }
