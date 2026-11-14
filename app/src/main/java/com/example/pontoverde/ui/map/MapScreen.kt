@@ -46,8 +46,7 @@ enum class TipoEcoponto(val nome: String, val cor: Color) {
     AMARELO("Amarelo", Color(0xFFFBC02D)),
     AZUL("Azul", Color(0xFF1976D2)),
     VERDE("Verde", Color(0xFF388E3C)),
-    PILHAO("Pilhão", Color(0xFFD32F2F)),
-    ECOCENTRO("Ecocentro", Color(0xFFF57C00))
+    VOLTA("Volta", Color(0xFF7B1FA2))
 }
 
 data class EcopontoUi(
@@ -75,8 +74,7 @@ private val marcadoresFalsos = listOf(
     MarcadorFalso(TipoEcoponto.AMARELO, Icons.Outlined.Delete, 0.68f, 0.25f),
     MarcadorFalso(TipoEcoponto.AZUL, Icons.Outlined.Delete, 0.20f, 0.36f),
     MarcadorFalso(TipoEcoponto.VERDE, Icons.Outlined.Delete, 0.74f, 0.52f),
-    MarcadorFalso(TipoEcoponto.PILHAO, Icons.Outlined.BatteryAlert, 0.29f, 0.65f),
-    MarcadorFalso(TipoEcoponto.ECOCENTRO, Icons.Outlined.Recycling, 0.84f, 0.69f)
+    MarcadorFalso(TipoEcoponto.VOLTA, Icons.Outlined.Recycling, 0.29f, 0.65f)
 )
 
 @Composable
