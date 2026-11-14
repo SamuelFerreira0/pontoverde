@@ -60,7 +60,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.pontoverde.data.PassoDeposicao
 import com.example.pontoverde.data.WasteInfo
-import com.example.pontoverde.ui.map.TipoEcoponto
+import com.example.pontoverde.data.TipoEcoponto
 import com.example.pontoverde.ui.theme.EcoColors
 import com.example.pontoverde.ui.theme.LeafBadge
 import com.example.pontoverde.ui.theme.PontoverdeTheme
@@ -406,12 +406,14 @@ private fun TipoEcoponto.colors(): Pair<Color, Color> = when (this) {
     TipoEcoponto.VERDE -> EcoColors.GreenContainer to EcoColors.GreenDark
     TipoEcoponto.PILHAO -> EcoColors.RedContainer to EcoColors.RedDark
     TipoEcoponto.ECOCENTRO -> Color(0xFFFFE8CC) to EcoColors.Orange
+    TipoEcoponto.VOLTA -> Color(0xFFF1E1F5) to Color(0xFF7B1FA2)
 }
 
 private fun TipoEcoponto.label(): String = when (this) {
     TipoEcoponto.PILHAO -> "Pilhão"
     TipoEcoponto.ECOCENTRO -> "Ecocentro"
-    else -> "Ecoponto ${nome.lowercase()}"
+    TipoEcoponto.VOLTA -> "Máquina Volta"
+    else -> "Ecoponto ${name.lowercase()}"
 }
 
 private val previewWaste = WasteInfo(

@@ -33,7 +33,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pontoverde.data.Ecoponto
+import com.example.pontoverde.data.TipoEcoponto
 import com.example.pontoverde.ui.theme.PontoverdeTheme
+import com.example.pontoverde.viewmodel.MapUiState
+import com.example.pontoverde.viewmodel.MapViewModel
+import kotlin.math.roundToInt
 
 private val Verde = Color(0xFF2E7D32)
 private val VerdeEscuro = Color(0xFF1B5E20)
@@ -42,13 +48,26 @@ private val Texto = Color(0xFF1C1B1F)
 private val Cinza = Color(0xFF68646B)
 private val AmareloClaro = Color(0xFFFFF2BD)
 
-enum class TipoEcoponto(val nome: String, val cor: Color) {
-    AMARELO("Amarelo", Color(0xFFFBC02D)),
-    AZUL("Azul", Color(0xFF1976D2)),
-    VERDE("Verde", Color(0xFF388E3C)),
-    PILHAO("Pilhão", Color(0xFFD32F2F)),
-    ECOCENTRO("Ecocentro", Color(0xFFF57C00))
-}
+// O tipo vive em data.TipoEcoponto; aqui só ficam o nome e a cor, que são coisas do ecrã.
+private val TipoEcoponto.nome: String
+    get() = when (this) {
+        TipoEcoponto.AMARELO -> "Amarelo"
+        TipoEcoponto.AZUL -> "Azul"
+        TipoEcoponto.VERDE -> "Verde"
+        TipoEcoponto.PILHAO -> "Pilhão"
+        TipoEcoponto.ECOCENTRO -> "Ecocentro"
+        TipoEcoponto.VOLTA -> "Volta"
+    }
+
+private val TipoEcoponto.cor: Color
+    get() = when (this) {
+        TipoEcoponto.AMARELO -> Color(0xFFFBC02D)
+        TipoEcoponto.AZUL -> Color(0xFF1976D2)
+        TipoEcoponto.VERDE -> Color(0xFF388E3C)
+        TipoEcoponto.PILHAO -> Color(0xFFD32F2F)
+        TipoEcoponto.ECOCENTRO -> Color(0xFFF57C00)
+        TipoEcoponto.VOLTA -> Color(0xFF7B1FA2)
+    }
 
 data class EcopontoUi(
     val tipo: TipoEcoponto,
@@ -60,35 +79,85 @@ data class EcopontoUi(
 )
 
 private class MarcadorFalso(
+    val id: String,
     val tipo: TipoEcoponto,
     val icone: ImageVector,
     val x: Float,
     val y: Float
 )
 
-private val ecopontoExemplo = EcopontoUi(
-    TipoEcoponto.AMARELO, "Rua Alexandre Herculano", "Ecoponto junto ao n.º 42",
-    "120 m", "2 min", true
-)
+/** Converte coordenadas em posições no mapa desenhado. Deixa de ser preciso com o mapa real. */
+private fun marcadoresDe(ecopontos: List<Ecoponto>, filtro: TipoEcoponto?): List<MarcadorFalso> {
+    if (ecopontos.isEmpty()) return emptyList()
+    val minLat = ecopontos.minOf { it.latitude }
+    val maxLat = ecopontos.maxOf { it.latitude }
+    val minLon = ecopontos.minOf { it.longitude }
+    val maxLon = ecopontos.maxOf { it.longitude }
 
-private val marcadoresFalsos = listOf(
-    MarcadorFalso(TipoEcoponto.AMARELO, Icons.Outlined.Delete, 0.68f, 0.25f),
-    MarcadorFalso(TipoEcoponto.AZUL, Icons.Outlined.Delete, 0.20f, 0.36f),
-    MarcadorFalso(TipoEcoponto.VERDE, Icons.Outlined.Delete, 0.74f, 0.52f),
-    MarcadorFalso(TipoEcoponto.PILHAO, Icons.Outlined.BatteryAlert, 0.29f, 0.65f),
-    MarcadorFalso(TipoEcoponto.ECOCENTRO, Icons.Outlined.Recycling, 0.84f, 0.69f)
-)
+    fun fracao(v: Double, min: Double, max: Double): Float =
+        if (max - min < 1e-9) 0.5f else ((v - min) / (max - min)).toFloat()
+
+    return ecopontos.map { e ->
+        val tipo = filtro ?: e.tipos.first()
+        MarcadorFalso(
+            id = e.id,
+            tipo = tipo,
+            icone = if (tipo == TipoEcoponto.VOLTA) Icons.Outlined.Recycling else Icons.Outlined.Delete,
+            x = 0.10f + 0.80f * fracao(e.longitude, minLon, maxLon),
+            y = 0.18f + 0.40f * (1f - fracao(e.latitude, minLat, maxLat))
+        )
+    }
+}
+
+/** Passa um ecoponto real para o texto que o painel mostra. */
+private fun Ecoponto.paraUi(lat: Double, lon: Double, filtro: TipoEcoponto?): EcopontoUi {
+    val metros = distanciaMetros(lat, lon)
+    return EcopontoUi(
+        tipo = filtro ?: tipos.first(),
+        rua = nome ?: "Ecoponto",
+        detalhe = tipos.joinToString(" · ") { it.nome },
+        distancia = if (metros >= 1000) "%.1f km".format(metros / 1000) else "${metros.roundToInt()} m",
+        tempoAPe = "${minutosAPe(lat, lon)} min",
+        disponivel = true
+    )
+}
 
 @Composable
 fun MapScreen(
-    ecoponto: EcopontoUi = ecopontoExemplo,
     onIniciarRota: () -> Unit = {},
     onSinalizar: () -> Unit = {},
     onCentrar: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    viewModel: MapViewModel = viewModel()
+) {
+    val estado by viewModel.estado.collectAsState()
+
+    MapContent(
+        estado = estado,
+        onFiltro = viewModel::alterarFiltro,
+        onSelecionar = viewModel::selecionar,
+        onIniciarRota = onIniciarRota,
+        onSinalizar = onSinalizar,
+        onCentrar = onCentrar,
+        modifier = modifier
+    )
+}
+
+/** Só desenha o estado que recebe e avisa quando o utilizador faz algo. */
+@Composable
+private fun MapContent(
+    estado: MapUiState,
+    onFiltro: (TipoEcoponto) -> Unit,
+    onSelecionar: (String) -> Unit,
+    onIniciarRota: () -> Unit,
+    onSinalizar: () -> Unit,
+    onCentrar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Por agora o filtro vive aqui; na fase 2 passa para o MapViewModel
-    var filtro by remember { mutableStateOf<TipoEcoponto?>(TipoEcoponto.AMARELO) }
+    val marcadores = remember(estado.visiveis, estado.filtro) {
+        marcadoresDe(estado.visiveis, estado.filtro)
+    }
+    val selecionado = estado.selecionado
 
     CompositionLocalProvider(LocalContentColor provides Texto) {
         BoxWithConstraints(modifier.fillMaxSize().background(Color(0xFFE7EBE4))) {
@@ -98,9 +167,10 @@ fun MapScreen(
 
             MapaFalso(escala)
 
-            marcadoresFalsos.forEach { m ->
+            marcadores.forEach { m ->
                 Pin(
                     m,
+                    { onSelecionar(m.id) },
                     Modifier.offset(x = largura * m.x - 19.dp, y = altura * m.y - 22.dp)
                 )
             }
@@ -144,18 +214,19 @@ fun MapScreen(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp)
                 ) {
-                    items(TipoEcoponto.entries) { tipo ->
-                        ChipFiltro(tipo, filtro == tipo) {
-                            filtro = if (filtro == tipo) null else tipo
-                        }
+                    items(estado.tiposDisponiveis) { tipo ->
+                        ChipFiltro(tipo, estado.filtro == tipo) { onFiltro(tipo) }
                     }
                 }
             }
 
-            PainelEcoponto(
-                ecoponto, onIniciarRota, onSinalizar,
-                Modifier.align(Alignment.BottomCenter)
-            )
+            if (selecionado != null) {
+                PainelEcoponto(
+                    selecionado.paraUi(estado.latitude, estado.longitude, estado.filtro),
+                    onIniciarRota, onSinalizar,
+                    Modifier.align(Alignment.BottomCenter)
+                )
+            }
         }
     }
 }
@@ -249,11 +320,12 @@ private val FormaPin = GenericShape { s, _ ->
 }
 
 @Composable
-private fun Pin(m: MarcadorFalso, modifier: Modifier = Modifier) {
+private fun Pin(m: MarcadorFalso, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(width = 38.dp, height = 44.dp)
             .clip(FormaPin)
+            .clickable(onClick = onClick)
             .background(m.tipo.cor),
         contentAlignment = Alignment.TopCenter
     ) {
@@ -445,5 +517,17 @@ private fun BotaoPainel(
 @Preview(showBackground = true, widthDp = 412, heightDp = 816)
 @Composable
 private fun MapScreenPreview() {
-    PontoverdeTheme { MapScreen() }
+    PontoverdeTheme {
+        MapContent(
+            estado = MapUiState(
+                ecopontos = listOf(
+                    Ecoponto("vdc-001", null, 41.6990, -8.8320,
+                        listOf(TipoEcoponto.VERDE, TipoEcoponto.AZUL, TipoEcoponto.AMARELO)),
+                    Ecoponto("vdc-002", null, 41.7040, -8.8250, listOf(TipoEcoponto.AMARELO)),
+                    Ecoponto("vdc-003", "Lidl (Volta)", 41.6950, -8.8430, listOf(TipoEcoponto.VOLTA))
+                )
+            ),
+            onFiltro = {}, onSelecionar = {}, onIniciarRota = {}, onSinalizar = {}, onCentrar = {}
+        )
+    }
 }

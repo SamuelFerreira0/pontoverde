@@ -5,7 +5,7 @@ import com.example.pontoverde.data.PassoDeposicao
 import com.example.pontoverde.data.ScanLabel
 import com.example.pontoverde.data.ScanResult
 import com.example.pontoverde.data.WasteInfo
-import com.example.pontoverde.ui.map.TipoEcoponto
+import com.example.pontoverde.data.TipoEcoponto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

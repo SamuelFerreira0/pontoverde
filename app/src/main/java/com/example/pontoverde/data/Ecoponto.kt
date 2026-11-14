@@ -7,7 +7,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-enum class TipoEcoponto { AMARELO, AZUL, VERDE, VOLTA }
+enum class TipoEcoponto { AMARELO, AZUL, VERDE, PILHAO, ECOCENTRO, VOLTA }
 
 data class Ecoponto(
     val id: String,

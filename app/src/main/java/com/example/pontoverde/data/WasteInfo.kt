@@ -1,7 +1,5 @@
 package com.example.pontoverde.data
 
-import com.example.pontoverde.ui.map.TipoEcoponto
-
 data class PassoDeposicao(val titulo: String, val descricao: String)
 
 data class WasteInfo(
