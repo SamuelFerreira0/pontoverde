@@ -7,6 +7,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,11 +22,16 @@ import com.example.pontoverde.ui.permissions.PermissionsScreen
 import com.example.pontoverde.ui.profile.ProfileScreen
 import com.example.pontoverde.ui.report.ReportScreen
 import com.example.pontoverde.ui.report.ReportSentScreen
+import com.example.pontoverde.ui.result.ResultScreen
 import com.example.pontoverde.ui.settings.AccountSettingsScreen
+import com.example.pontoverde.viewmodel.ResultViewModel
 
 @Composable
 fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    // Um só ResultViewModel, partilhado pela Câmara (que o preenche) e pelo ecrã de Resultado
+    val resultViewModel: ResultViewModel = viewModel()
+
     val entradaAtual by navController.currentBackStackEntryAsState()
     val rotaAtual = entradaAtual?.destination?.route
     val temBarra = rotaAtual in Rotas.barraInferior
@@ -89,7 +95,10 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
             // --- Ecrãs da barra de baixo ---
             composable(Rotas.CAMARA) {
                 CameraScreen(
-                    onScanned = { navController.navigate(Rotas.RESULTADO) },
+                    onScanned = { resultado ->
+                        resultViewModel.onScan(resultado)
+                        navController.navigate(Rotas.RESULTADO)
+                    },
                     onPermissionNotNow = { navController.irParaSeparador(Rotas.MAPA) }
                 )
             }
@@ -97,9 +106,7 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
                 MapScreen(onSinalizar = { navController.irParaSeparador(Rotas.REPORTAR) })
             }
             composable(Rotas.PERFIL) {
-                // TODO: ligar às Definições quando o ProfileScreen tiver o parâmetro onSettings
-                // ProfileScreen(onSettings = { navController.navigate(Rotas.DEFINICOES) })
-                ProfileScreen()
+                ProfileScreen(onSettings = { navController.navigate(Rotas.DEFINICOES) })
             }
             composable(Rotas.REPORTAR) {
                 ReportScreen(
@@ -108,7 +115,14 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
             }
 
             // --- Fora da barra ---
-            composable(Rotas.RESULTADO) { PlaceholderEcra("Resultado") }
+            composable(Rotas.RESULTADO) {
+                ResultScreen(
+                    viewModel = resultViewModel,
+                    onBack = { navController.popBackStack() },
+                    onVerEcoponto = { navController.irParaSeparador(Rotas.MAPA) },
+                    onTentarOutraVez = { navController.popBackStack() },
+                )
+            }
             composable(Rotas.REPORT_ENVIADO) {
                 ReportSentScreen(
                     onBackToMap = { navController.irParaSeparador(Rotas.MAPA) },
