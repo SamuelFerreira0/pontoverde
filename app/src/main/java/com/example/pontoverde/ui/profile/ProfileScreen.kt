@@ -22,16 +22,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BatteryFull
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.LocalDrink
-import androidx.compose.material.icons.outlined.WineBar
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Eco
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,13 +49,16 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pontoverde.ui.theme.EcoBottomBar
+import com.example.pontoverde.ui.theme.EcoColors
 import com.example.pontoverde.ui.theme.EcoTab
 import com.example.pontoverde.ui.theme.Overline
+import com.example.pontoverde.ui.theme.PontoverdeTheme
 import com.example.pontoverde.ui.theme.ScreenHeader
 import com.example.pontoverde.ui.theme.ecoCard
-import com.example.pontoverde.ui.theme.EcoColors
-import com.example.pontoverde.ui.theme.PontoverdeTheme
+import com.example.pontoverde.viewmodel.ProfileUiState
+import com.example.pontoverde.viewmodel.ProfileViewModel
 
 // ---------------------------------------------------------------------------
 // Models + sample data
@@ -72,49 +74,6 @@ data class RecyclingActivity(
     val iconTint: Color,
     val iconContainer: Color,
 )
-
-private val sampleStats = listOf(
-    BinStat("Amarelo", 12, EcoColors.Yellow),
-    BinStat("Azul", 7, EcoColors.Blue),
-    BinStat("Vidro", 4, EcoColors.GreenLight),
-    BinStat("Pilhão", 1, EcoColors.Red),
-)
-
-private val sampleActivities = listOf(
-    RecyclingActivity(
-        title = "Garrafa de plástico",
-        bin = "Ecoponto amarelo",
-        time = "Hoje, 09:42",
-        icon = Icons.Outlined.LocalDrink,
-        iconTint = EcoColors.YellowDark,
-        iconContainer = EcoColors.YellowContainer,
-    ),
-    RecyclingActivity(
-        title = "Caixa de cereais",
-        bin = "Ecoponto azul",
-        time = "Ontem, 18:15",
-        icon = Icons.Outlined.Description,
-        iconTint = EcoColors.BlueDark,
-        iconContainer = EcoColors.BlueContainer,
-    ),
-    RecyclingActivity(
-        title = "Frasco de vidro",
-        bin = "Ecoponto verde",
-        time = "12 jun., 13:08",
-        icon = Icons.Outlined.WineBar,
-        iconTint = EcoColors.Green,
-        iconContainer = EcoColors.GreenContainer,
-    ),
-    RecyclingActivity(
-        title = "Pilha AA",
-        bin = "Pilhão",
-        time = "9 jun., 17:30",
-        icon = Icons.Filled.BatteryFull,
-        iconTint = EcoColors.RedDark,
-        iconContainer = EcoColors.RedContainer,
-    ),
-)
-
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
@@ -122,12 +81,26 @@ private val sampleActivities = listOf(
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
-    userName: String = "Ana Martins",
-    email: String = "jgmeirafaria@gmail.com",
-    stats: List<BinStat> = sampleStats,
-    activities: List<RecyclingActivity> = sampleActivities,
+    viewModel: ProfileViewModel = viewModel(),
+    onSettings: () -> Unit = {},
 ) {
-    var showEmpty by remember { mutableStateOf(false) }
+    val state by viewModel.uiState.collectAsState()
+
+    ProfileContent(
+        state = state,
+        onToggleEmpty = viewModel::toggleEmpty,
+        onSettings = onSettings,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ProfileContent(
+    state: ProfileUiState,
+    onToggleEmpty: () -> Unit,
+    onSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
 
     LazyColumn(
         modifier = modifier,
@@ -139,9 +112,9 @@ fun ProfileScreen(
             Spacer(Modifier.height(4.dp))
         }
 
-        item { ProfileCard(name = userName, email = email) }
+        item { ProfileCard(name = state.userName, email = state.email, onSettings = onSettings) }
 
-        item { MonthlyStatsCard(stats = stats) }
+        item { MonthlyStatsCard(stats = state.stats) }
 
         item {
             Spacer(Modifier.height(6.dp))
@@ -164,8 +137,8 @@ fun ProfileScreen(
                     )
                 }
                 Text(
-                    text = if (showEmpty) "Ver lista" else "Ver vazio",
-                    modifier = Modifier.clickable { showEmpty = !showEmpty },
+                    text = if (state.showEmpty) "Ver lista" else "Ver vazio",
+                    modifier = Modifier.clickable(onClick = onToggleEmpty),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = EcoColors.TextSecondary,
@@ -173,10 +146,10 @@ fun ProfileScreen(
             }
         }
 
-        if (showEmpty || activities.isEmpty()) {
+        if (state.showEmpty || state.activities.isEmpty()) {
             item { EmptyActivity() }
         } else {
-            items(activities) { activity -> ActivityRow(activity) }
+            items(state.activities) { activity -> ActivityRow(activity) }
         }
     }
 }
@@ -186,7 +159,7 @@ fun ProfileScreen(
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun ProfileCard(name: String, email: String) {
+private fun ProfileCard(name: String, email: String, onSettings: () -> Unit) {
     val initials = name.split(" ")
         .mapNotNull { it.firstOrNull() }
         .take(2)
@@ -241,7 +214,7 @@ private fun ProfileCard(name: String, email: String) {
 
         Spacer(Modifier.width(16.dp))
 
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = name,
                 fontSize = 18.sp,
@@ -250,6 +223,13 @@ private fun ProfileCard(name: String, email: String) {
             )
             Spacer(Modifier.height(2.dp))
             Text(text = email, fontSize = 11.sp, color = EcoColors.TextSecondary)
+        }
+        IconButton(onClick = onSettings) {
+            Icon(
+                imageVector = Icons.Outlined.Settings,
+                contentDescription = "Definições",
+                tint = EcoColors.TextSecondary,
+            )
         }
     }
 }
@@ -432,7 +412,11 @@ private fun ProfileScreenPreview() {
             containerColor = EcoColors.Background,
             bottomBar = { EcoBottomBar(selected = EcoTab.Profile, onSelect = {}) },
         ) { padding ->
-            ProfileScreen(modifier = Modifier.padding(padding))
+            ProfileContent(
+                state = ProfileUiState(),
+                onToggleEmpty = {},
+                onSettings = {},
+                modifier = Modifier.padding(padding),
+            )}
         }
     }
-}

@@ -38,10 +38,8 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,13 +59,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pontoverde.ui.theme.EcoBottomBar
-import com.example.pontoverde.ui.theme.EcoTab
-import com.example.pontoverde.ui.theme.ScreenHeader
 import com.example.pontoverde.ui.theme.EcoColors
+import com.example.pontoverde.ui.theme.EcoTab
 import com.example.pontoverde.ui.theme.PontoverdeTheme
+import com.example.pontoverde.ui.theme.ScreenHeader
+import com.example.pontoverde.viewmodel.ReportUiState
+import com.example.pontoverde.viewmodel.ReportViewModel
 
-private const val MAX_DESCRIPTION = 180
+const val MAX_DESCRIPTION = 180
 
 enum class ProblemType(
     val label: String,
@@ -83,14 +84,34 @@ enum class ProblemType(
 @Composable
 fun ReportScreen(
     modifier: Modifier = Modifier,
-    locationName: String = "A tua localização",
-    city: String = "Lisboa",
+    viewModel: ReportViewModel = viewModel(),
     onUseNearest: () -> Unit = {},
     onAddPhoto: () -> Unit = {},
     onSubmit: (problem: ProblemType, description: String) -> Unit = { _, _ -> },
 ) {
-    var selected by rememberSaveable { mutableStateOf(ProblemType.Full) }
-    var description by rememberSaveable { mutableStateOf("") }
+    val state by viewModel.uiState.collectAsState()
+
+    ReportContent(
+        state = state,
+        onProblemSelected = viewModel::onProblemSelected,
+        onDescriptionChange = viewModel::onDescriptionChange,
+        onUseNearest = onUseNearest,
+        onAddPhoto = onAddPhoto,
+        onSubmit = { onSubmit(state.selected, state.description) },
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ReportContent(
+    state: ReportUiState,
+    onProblemSelected: (ProblemType) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onUseNearest: () -> Unit,
+    onAddPhoto: () -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
 
     Column(
         modifier = modifier
@@ -109,7 +130,7 @@ fun ReportScreen(
         // ---- Step 1 ---------------------------------------------------------
         StepTitle(1, "Escolhe o ecoponto", "Indica onde encontraste o problema")
         Spacer(Modifier.height(12.dp))
-        MapPreview(locationName = locationName, city = city)
+        MapPreview(locationName = state.locationName, city = state.city)
         Spacer(Modifier.height(12.dp))
         UseNearestButton(onClick = onUseNearest)
 
@@ -124,8 +145,8 @@ fun ReportScreen(
                     rowItems.forEach { type ->
                         ProblemChip(
                             type = type,
-                            selected = type == selected,
-                            onClick = { selected = type },
+                            selected = type == state.selected,
+                            onClick = { onProblemSelected(type) },
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -151,8 +172,8 @@ fun ReportScreen(
         }
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
-            value = description,
-            onValueChange = { if (it.length <= MAX_DESCRIPTION) description = it },
+            value = state.description,
+            onValueChange = onDescriptionChange,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(112.dp),
@@ -175,7 +196,7 @@ fun ReportScreen(
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            text = "${description.length}/$MAX_DESCRIPTION",
+            text = "${state.description.length}/$MAX_DESCRIPTION",
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.End,
             fontSize = 10.sp,
@@ -191,7 +212,7 @@ fun ReportScreen(
 
         // ---- Submit ---------------------------------------------------------
         Button(
-            onClick = { onSubmit(selected, description) },
+            onClick = onSubmit,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
@@ -514,7 +535,15 @@ private fun ReportScreenPreview() {
             containerColor = EcoColors.Background,
             bottomBar = { EcoBottomBar(selected = EcoTab.Report, onSelect = {}) },
         ) { padding ->
-            ReportScreen(modifier = Modifier.padding(padding))
+            ReportContent(
+                state = ReportUiState(),
+                onProblemSelected = {},
+                onDescriptionChange = {},
+                onUseNearest = {},
+                onAddPhoto = {},
+                onSubmit = {},
+                modifier = Modifier.padding(padding),
+            )
         }
     }
 }
