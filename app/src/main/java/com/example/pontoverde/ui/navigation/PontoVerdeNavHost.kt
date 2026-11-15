@@ -5,17 +5,20 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.pontoverde.data.AuthRepository
 import com.example.pontoverde.ui.auth.BoasVindasScreen
 import com.example.pontoverde.ui.auth.LoginScreen
 import com.example.pontoverde.ui.auth.RegistoScreen
@@ -28,6 +31,8 @@ import com.example.pontoverde.ui.report.ReportScreen
 import com.example.pontoverde.ui.report.ReportSentScreen
 import com.example.pontoverde.ui.result.ResultScreen
 import com.example.pontoverde.ui.settings.AccountSettingsScreen
+import com.example.pontoverde.viewmodel.AuthEvento
+import com.example.pontoverde.viewmodel.AuthViewModel
 import com.example.pontoverde.viewmodel.ResultViewModel
 
 @Composable
@@ -37,6 +42,10 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
     val resultViewModel: ResultViewModel = viewModel()
     // Problema que o utilizador acabou de sinalizar, para o ecrã "Report enviado"
     var problemaEnviado by remember { mutableStateOf(ProblemType.Full) }
+    // Se já há sessão iniciada no Firebase, a app abre logo na câmara
+    val inicio = remember {
+        if (AuthRepository().estaAutenticado) Rotas.CAMARA else Rotas.BOAS_VINDAS
+    }
 
     val entradaAtual by navController.currentBackStackEntryAsState()
     val rotaAtual = entradaAtual?.destination?.route
@@ -53,7 +62,7 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Rotas.BOAS_VINDAS,
+            startDestination = inicio,
             modifier = Modifier
                 .padding(padding)
                 .then(if (temBarra) Modifier else Modifier.navigationBarsPadding())
@@ -66,10 +75,23 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
                 )
             }
             composable(Rotas.LOGIN) {
+                val authViewModel: AuthViewModel = viewModel()
+                val estado by authViewModel.uiState.collectAsStateWithLifecycle()
+                // Quando o ViewModel avisa que a sessão foi iniciada, mudamos de ecrã
+                LaunchedEffect(authViewModel) {
+                    authViewModel.eventos.collect { evento ->
+                        when (evento) {
+                            AuthEvento.Autenticado -> navController.irParaPermissoes()
+                        }
+                    }
+                }
                 LoginScreen(
+                    aCarregar = estado.aCarregar,
+                    erro = estado.erro,
+                    aviso = estado.aviso,
                     onVoltar = { navController.popBackStack() },
-                    onEntrar = { _, _ -> navController.irParaPermissoes() },
-                    onEsqueciPassword = { /* TODO: ecrã de recuperar palavra-passe */ },
+                    onEntrar = { email, password -> authViewModel.entrar(email, password) },
+                    onEsqueciPassword = { email -> authViewModel.recuperarPassword(email) },
                     onCriarConta = {
                         navController.navigate(Rotas.REGISTO) {
                             popUpTo(Rotas.LOGIN) { inclusive = true }
@@ -78,9 +100,22 @@ fun PontoVerdeNavHost(modifier: Modifier = Modifier) {
                 )
             }
             composable(Rotas.REGISTO) {
+                val authViewModel: AuthViewModel = viewModel()
+                val estado by authViewModel.uiState.collectAsStateWithLifecycle()
+                LaunchedEffect(authViewModel) {
+                    authViewModel.eventos.collect { evento ->
+                        when (evento) {
+                            AuthEvento.Autenticado -> navController.irParaPermissoes()
+                        }
+                    }
+                }
                 RegistoScreen(
+                    aCarregar = estado.aCarregar,
+                    erro = estado.erro,
                     onVoltar = { navController.popBackStack() },
-                    onCriarConta = { _, _, _ -> navController.irParaPermissoes() },
+                    onCriarConta = { nome, email, password ->
+                        authViewModel.criarConta(nome, email, password)
+                    },
                     onEntrar = {
                         navController.navigate(Rotas.LOGIN) {
                             popUpTo(Rotas.REGISTO) { inclusive = true }
