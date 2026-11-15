@@ -29,10 +29,10 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +47,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pontoverde.ui.theme.PontoverdeTheme
+import com.example.pontoverde.viewmodel.AccountSettingsUiState
+import com.example.pontoverde.viewmodel.AccountSettingsViewModel
 
 private val Verde = Color(0xFF2E7D32)
 private val VerdeClaro = Color(0xFFE8F5E9)
@@ -58,15 +61,32 @@ private val Cinza = Color(0xFF68646B)
 @Composable
 fun AccountSettingsScreen(
     modifier: Modifier = Modifier,
-    userName: String = "Ana Martins",
-    email: String = "ana.martins@email.com",
     onBack: () -> Unit = {},
-    onSave: (name: String) -> Unit = {},
     onChangePassword: () -> Unit = {},
+    viewModel: AccountSettingsViewModel = viewModel(),
 ) {
-    var nome by rememberSaveable { mutableStateOf(userName) }
-    var guardado by rememberSaveable { mutableStateOf(false) }
+    val estado by viewModel.uiState.collectAsState()
 
+    AccountSettingsContent(
+        estado = estado,
+        onNameChange = viewModel::onNameChange,
+        onSave = viewModel::onSave,
+        onBack = onBack,
+        onChangePassword = onChangePassword,
+        modifier = modifier
+    )
+}
+
+/** Só desenha o estado que recebe e avisa quando o utilizador faz algo. */
+@Composable
+private fun AccountSettingsContent(
+    estado: AccountSettingsUiState,
+    onNameChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onBack: () -> Unit,
+    onChangePassword: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     CompositionLocalProvider(LocalContentColor provides Texto) {
         Box(modifier.fillMaxSize().background(Fundo)) {
             Column(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -78,13 +98,13 @@ fun AccountSettingsScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(17.dp)) {
                         Campo(
                             label = "Nome",
-                            value = nome,
-                            onValueChange = { nome = it; guardado = false },
+                            value = estado.nome,
+                            onValueChange = onNameChange,
                             placeholder = "O teu nome"
                         )
                         Campo(
                             label = "Email",
-                            value = email,
+                            value = estado.email,
                             onValueChange = {},
                             placeholder = "O teu email",
                             readOnly = true,
@@ -92,13 +112,10 @@ fun AccountSettingsScreen(
                         )
                     }
                     LinhaAlterarPassword(onChangePassword)
-                    BotaoGuardar {
-                        onSave(nome.trim().ifEmpty { userName })
-                        guardado = true
-                    }
+                    BotaoGuardar(onSave)
                 }
             }
-            if (guardado) {
+            if (estado.guardado) {
                 MensagemGuardado(
                     Modifier.align(Alignment.BottomCenter).padding(horizontal = 24.dp, vertical = 28.dp)
                 )
@@ -274,5 +291,10 @@ private fun MensagemGuardado(modifier: Modifier = Modifier) {
 @Preview(showBackground = true, widthDp = 412, heightDp = 816)
 @Composable
 private fun AccountSettingsScreenPreview() {
-    PontoverdeTheme { AccountSettingsScreen() }
+    PontoverdeTheme {
+        AccountSettingsContent(
+            estado = AccountSettingsUiState(),
+            onNameChange = {}, onSave = {}, onBack = {}, onChangePassword = {}
+        )
+    }
 }
