@@ -25,12 +25,15 @@ import androidx.compose.ui.unit.dp
  * Faz validações simples no próprio ecrã (formato do email, palavra-passe
  * com pelo menos 6 caracteres, palavras-passe iguais). O Firebase Auth exige
  * no mínimo 6 caracteres, por isso validamos isso antes de enviar.
+ * Os erros que vêm do Firebase (ex.: email já usado) chegam pelo parâmetro erro.
  */
 @Composable
 fun RegistoScreen(
     onVoltar: () -> Unit,
     onCriarConta: (nome: String, email: String, password: String) -> Unit,
-    onEntrar: () -> Unit
+    onEntrar: () -> Unit,
+    aCarregar: Boolean = false,
+    erro: String? = null
 ) {
     var nome by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
@@ -115,13 +118,20 @@ fun RegistoScreen(
                     erro = if (passwordsDiferentes) "As palavras-passe não coincidem" else null
                 )
 
+                // Erro que vem do ViewModel (ex.: "Já existe uma conta com este email.")
+                if (erro != null) {
+                    Spacer(Modifier.height(16.dp))
+                    MensagemAuth(texto = erro, eErro = true)
+                }
+
                 Spacer(Modifier.height(20.dp))
 
                 BotaoAuth(
                     texto = "Criar conta",
                     icone = IconesAuth.CriarConta,
                     onClick = { onCriarConta(nome.trim(), email.trim(), password) },
-                    enabled = formularioValido
+                    enabled = formularioValido,
+                    aCarregar = aCarregar
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -143,5 +153,16 @@ private fun RegistoScreenPreview() {
         onVoltar = {},
         onCriarConta = { _, _, _ -> },
         onEntrar = {}
+    )
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844, name = "Com erro")
+@Composable
+private fun RegistoScreenErroPreview() {
+    RegistoScreen(
+        onVoltar = {},
+        onCriarConta = { _, _, _ -> },
+        onEntrar = {},
+        erro = "Já existe uma conta com este email."
     )
 }

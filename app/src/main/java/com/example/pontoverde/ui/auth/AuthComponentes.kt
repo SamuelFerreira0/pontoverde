@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -254,26 +255,38 @@ fun CampoAuth(
     }
 }
 
-/** Botão grande arredondado: verde cheio, ou só com contorno (preenchido = false). */
+/**
+ * Botão grande arredondado: verde cheio, ou só com contorno (preenchido = false).
+ * Com aCarregar = true mostra uma roda a girar e não deixa carregar outra vez.
+ */
 @Composable
 fun BotaoAuth(
     texto: String,
     icone: ImageVector,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    preenchido: Boolean = true
+    preenchido: Boolean = true,
+    aCarregar: Boolean = false
 ) {
     val forma = RoundedCornerShape(50)
     val conteudo: @Composable () -> Unit = {
-        Icon(icone, contentDescription = null, modifier = Modifier.size(22.dp))
-        Spacer(Modifier.width(10.dp))
-        Text(texto, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        if (aCarregar) {
+            CircularProgressIndicator(
+                color = Color.White,
+                strokeWidth = 2.5.dp,
+                modifier = Modifier.size(24.dp)
+            )
+        } else {
+            Icon(icone, contentDescription = null, modifier = Modifier.size(22.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(texto, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        }
     }
 
     if (preenchido) {
         Button(
             onClick = onClick,
-            enabled = enabled,
+            enabled = enabled && !aCarregar,
             shape = forma,
             colors = ButtonDefaults.buttonColors(
                 containerColor = CoresAuth.Verde,
@@ -329,4 +342,20 @@ fun RodapeAuth(pergunta: String, acao: String, onAcao: () -> Unit) {
                 .padding(horizontal = 6.dp, vertical = 4.dp)
         )
     }
+}
+
+/** Caixa com uma mensagem: vermelha se for erro, verde se for aviso. */
+@Composable
+fun MensagemAuth(texto: String, eErro: Boolean) {
+    val corTexto = if (eErro) CoresAuth.Erro else CoresAuth.VerdeEscuro
+    val corFundo = if (eErro) Color(0xFFFDECEA) else CoresAuth.VerdeClaro
+    Text(
+        text = texto,
+        color = corTexto,
+        fontSize = 13.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(corFundo, RoundedCornerShape(12.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp)
+    )
 }
