@@ -17,3 +17,6 @@ local.properties
 # IDE e Kotlin
 .idea/
 .kotlin/
+
+# Configuração do Firebase (cada um tem a sua cópia local)
+google-services.json

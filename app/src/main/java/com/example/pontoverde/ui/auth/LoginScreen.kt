@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -28,18 +27,21 @@ import androidx.compose.ui.unit.sp
 /**
  * Ecrã de Entrar ("Bem-vindo de volta").
  *
- * O ecrã não sabe nada de Firebase: só recolhe o email e a palavra-passe
- * e avisa quem o chamou através de callbacks. No Checkpoint 2, o onEntrar
- * passa a chamar o AuthViewModel.
+ * Continua a não saber nada de Firebase nem do ViewModel: recebe o estado
+ * (aCarregar, erro, aviso) e avisa das ações através de callbacks.
+ * Quem liga isto ao AuthViewModel é o PontoVerdeNavHost.
  */
 @Composable
 fun LoginScreen(
     onVoltar: () -> Unit,
     onEntrar: (email: String, password: String) -> Unit,
-    onEsqueciPassword: () -> Unit,
-    onCriarConta: () -> Unit
+    onEsqueciPassword: (email: String) -> Unit,
+    onCriarConta: () -> Unit,
+    aCarregar: Boolean = false,
+    erro: String? = null,
+    aviso: String? = null
 ) {
-    // rememberSaveable guarda o texto mesmo se o ecrã rodar
+    // O texto escrito é estado só do ecrã: rememberSaveable chega e sobrevive à rotação
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
@@ -95,9 +97,16 @@ fun LoginScreen(
                     modifier = Modifier
                         .align(Alignment.End)
                         .padding(top = 6.dp)
-                        .clickable(onClick = onEsqueciPassword)
+                        .clickable(enabled = !aCarregar) { onEsqueciPassword(email.trim()) }
                         .padding(4.dp)
                 )
+
+                // Mensagem que vem do ViewModel (erro do Firebase ou aviso)
+                val mensagem = erro ?: aviso
+                if (mensagem != null) {
+                    Spacer(Modifier.height(16.dp))
+                    MensagemAuth(texto = mensagem, eErro = erro != null)
+                }
 
                 Spacer(Modifier.height(24.dp))
 
@@ -105,7 +114,8 @@ fun LoginScreen(
                     texto = "Entrar",
                     icone = IconesAuth.Entrar,
                     onClick = { onEntrar(email.trim(), password) },
-                    enabled = email.isNotBlank() && password.isNotBlank()
+                    enabled = email.isNotBlank() && password.isNotBlank(),
+                    aCarregar = aCarregar
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -128,5 +138,17 @@ private fun LoginScreenPreview() {
         onEntrar = { _, _ -> },
         onEsqueciPassword = {},
         onCriarConta = {}
+    )
+}
+
+@Preview(showBackground = true, widthDp = 390, heightDp = 844, name = "Com erro")
+@Composable
+private fun LoginScreenErroPreview() {
+    LoginScreen(
+        onVoltar = {},
+        onEntrar = { _, _ -> },
+        onEsqueciPassword = {},
+        onCriarConta = {},
+        erro = "Email ou palavra-passe incorretos."
     )
 }
