@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,7 +60,7 @@ private val TipoEcoponto.nome: String
         TipoEcoponto.VOLTA -> "Volta"
     }
 
-private val TipoEcoponto.cor: Color
+internal val TipoEcoponto.cor: Color
     get() = when (this) {
         TipoEcoponto.AMARELO -> Color(0xFFFBC02D)
         TipoEcoponto.AZUL -> Color(0xFF1976D2)
@@ -154,10 +155,15 @@ private fun MapContent(
     onCentrar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val marcadores = remember(estado.visiveis, estado.filtro) {
-        marcadoresDe(estado.visiveis, estado.filtro)
-    }
     val selecionado = estado.selecionado
+    val emPreview = LocalInspectionMode.current
+
+    // Cada toque em "centrar" aumenta este número, e o mapa reage à mudança
+    var pedidoCentrar by remember { mutableIntStateOf(0) }
+    val centrar: () -> Unit = {
+        pedidoCentrar++
+        onCentrar()
+    }
 
     CompositionLocalProvider(LocalContentColor provides Texto) {
         BoxWithConstraints(modifier.fillMaxSize().background(Color(0xFFE7EBE4))) {
@@ -165,27 +171,43 @@ private fun MapContent(
             val altura = maxHeight
             val escala = largura.value / 412f
 
-            MapaFalso(escala)
-
-            marcadores.forEach { m ->
-                Pin(
-                    m,
-                    { onSelecionar(m.id) },
-                    Modifier.offset(x = largura * m.x - 19.dp, y = altura * m.y - 22.dp)
+            if (emPreview) {
+                // A Preview não consegue mostrar o mapa real, por isso usa o desenho
+                val marcadores = remember(estado.visiveis, estado.filtro) {
+                    marcadoresDe(estado.visiveis, estado.filtro)
+                }
+                MapaFalso(escala)
+                marcadores.forEach { m ->
+                    Pin(
+                        m,
+                        { onSelecionar(m.id) },
+                        Modifier.offset(x = largura * m.x - 19.dp, y = altura * m.y - 22.dp)
+                    )
+                }
+                // Posição do utilizador (desenho)
+                Box(
+                    Modifier
+                        .offset(x = (97 * escala).dp, y = 436.dp)
+                        .size(24.dp)
+                        .drawBehind {
+                            drawCircle(Color(0xFF1976D2).copy(alpha = 0.18f), radius = 22.dp.toPx())
+                        }
+                        .background(Color(0xFF1976D2), CircleShape)
+                        .border(5.dp, Color.White, CircleShape)
+                )
+            } else {
+                // O mapa real
+                MapaOsm(
+                    ecopontos = estado.visiveis,
+                    filtro = estado.filtro,
+                    selecionadoId = selecionado?.id,
+                    latitude = estado.latitude,
+                    longitude = estado.longitude,
+                    pedidoCentrar = pedidoCentrar,
+                    onPinClick = onSelecionar,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
-
-            // Posição do utilizador
-            Box(
-                Modifier
-                    .offset(x = (97 * escala).dp, y = 436.dp)
-                    .size(24.dp)
-                    .drawBehind {
-                        drawCircle(Color(0xFF1976D2).copy(alpha = 0.18f), radius = 22.dp.toPx())
-                    }
-                    .background(Color(0xFF1976D2), CircleShape)
-                    .border(5.dp, Color.White, CircleShape)
-            )
 
             // Botão de centrar
             Box(
@@ -195,7 +217,7 @@ private fun MapContent(
                     .size(44.dp)
                     .shadow(6.dp, RoundedCornerShape(15.dp))
                     .background(Color.White, RoundedCornerShape(15.dp))
-                    .clickable(onClick = onCentrar),
+                    .clickable(onClick = centrar),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Outlined.MyLocation, "Mostrar localização", tint = Verde)
@@ -208,7 +230,7 @@ private fun MapContent(
                     .statusBarsPadding()
                     .padding(top = 10.dp)
             ) {
-                BarraPesquisa(onCentrar, Modifier.padding(horizontal = 14.dp))
+                BarraPesquisa(centrar, Modifier.padding(horizontal = 14.dp))
                 Spacer(Modifier.height(10.dp))
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -220,18 +242,29 @@ private fun MapContent(
                 }
             }
 
-            if (selecionado != null) {
-                PainelEcoponto(
-                    selecionado.paraUi(estado.latitude, estado.longitude, estado.filtro),
-                    onIniciarRota, onSinalizar,
-                    Modifier.align(Alignment.BottomCenter)
+            // Atribuição obrigatória (dados do OpenStreetMap, imagens da CARTO), logo acima do painel
+            Column(Modifier.align(Alignment.BottomCenter)) {
+                Text(
+                    "© OpenStreetMap contributors © CARTO",
+                    fontSize = 9.sp,
+                    color = Cinza,
+                    modifier = Modifier
+                        .padding(start = 8.dp, bottom = 4.dp)
+                        .background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 5.dp, vertical = 1.dp)
                 )
+                if (selecionado != null) {
+                    PainelEcoponto(
+                        selecionado.paraUi(estado.latitude, estado.longitude, estado.filtro),
+                        onIniciarRota, onSinalizar
+                    )
+                }
             }
         }
     }
 }
 
-/** Fundo desenhado que imita o mapa do mockup. Na fase 2 é substituído pelo Google Maps. */
+/** Fundo desenhado que imita o mapa do mockup. Agora só é usado na Preview. */
 @Composable
 private fun BoxWithConstraintsScope.MapaFalso(escala: Float) {
     Canvas(Modifier.fillMaxSize()) {
