@@ -242,10 +242,10 @@ private fun MapContent(
                 }
             }
 
-            // Atribuição obrigatória (dados do OpenStreetMap, imagens da CARTO), logo acima do painel
+            // Atribuição obrigatória (dados do OpenStreetMap, imagens da MapTiler), logo acima do painel
             Column(Modifier.align(Alignment.BottomCenter)) {
                 Text(
-                    "© OpenStreetMap contributors © CARTO",
+                    "© MapTiler © OpenStreetMap contributors",
                     fontSize = 9.sp,
                     color = Cinza,
                     modifier = Modifier

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -6,6 +8,12 @@ plugins {
 // Sem o google-services.json (que não vai para o Git) o build não deve falhar
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+}
+
+// Lê as chaves do local.properties (que também não vai para o Git)
+val chaves = Properties().apply {
+    val ficheiro = rootProject.file("local.properties")
+    if (ficheiro.exists()) ficheiro.inputStream().use { load(it) }
 }
 
 android {
@@ -22,6 +30,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Chave da MapTiler (imagens do mapa), lida no código com BuildConfig.MAPTILER_KEY
+        buildConfigField("String", "MAPTILER_KEY", "\"${chaves.getProperty("MAPTILER_KEY", "")}\"")
     }
 
     buildTypes {
@@ -38,6 +49,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

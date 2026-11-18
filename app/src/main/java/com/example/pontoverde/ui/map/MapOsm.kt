@@ -12,28 +12,32 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.pontoverde.BuildConfig
 import com.example.pontoverde.data.Ecoponto
 import com.example.pontoverde.data.TipoEcoponto
-import org.osmdroid.tileprovider.tilesource.XYTileSource
+import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
+import org.osmdroid.util.MapTileIndex
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
 /**
- * Imagens do mapa servidas pela CARTO, com dados do OpenStreetMap.
- * Os servidores oficiais do OpenStreetMap (voluntários) bloqueiam apps, por isso usamos este.
+ * Imagens do mapa servidas pela MapTiler (plano gratuito), com dados do OpenStreetMap.
+ * A chave vem do local.properties (MAPTILER_KEY), através do BuildConfig, para não ir para o Git.
  */
-private val MapaCarto = XYTileSource(
-    "CartoVoyager", 0, 20, 256, ".png",
-    arrayOf(
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/",
-        "https://d.basemaps.cartocdn.com/rastertiles/voyager/"
-    ),
-    "© OpenStreetMap contributors © CARTO"
-)
+private class MapaMapTiler(private val chave: String) : OnlineTileSourceBase(
+    "MapTilerStreets", 1, 20, 256, ".png",
+    arrayOf("https://api.maptiler.com/maps/streets-v4/256/"),
+    "© MapTiler © OpenStreetMap contributors"
+) {
+    // Monta o endereço de cada imagem: .../256/{z}/{x}/{y}.png?key=CHAVE
+    override fun getTileURLString(indice: Long): String =
+        baseUrl +
+                MapTileIndex.getZoom(indice) + "/" +
+                MapTileIndex.getX(indice) + "/" +
+                MapTileIndex.getY(indice) + ".png?key=" + chave
+}
 
 /**
  * O mapa real (dados do OpenStreetMap, desenhado pelo osmdroid).
@@ -56,7 +60,7 @@ fun MapaOsm(
     // O MapView (vista do osmdroid) é criado uma só vez e reaproveitado
     val mapView = remember {
         MapView(context).apply {
-            setTileSource(MapaCarto)                  // imagens da CARTO (dados do OpenStreetMap)
+            setTileSource(MapaMapTiler(BuildConfig.MAPTILER_KEY))   // imagens da MapTiler (dados do OpenStreetMap)
             setMultiTouchControls(true)               // zoom com dois dedos
             zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
             controller.setZoom(16.0)
